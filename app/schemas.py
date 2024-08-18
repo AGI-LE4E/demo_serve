@@ -8,4 +8,10 @@ class IsJeju(Enum):
     NO = "NO"
 
 
+class RestaurantOrTourSpot(Enum):
+    RESTAURANT = "RESTAURANT"
+    TOUR_SPOT = "TOUR_SPOT"
+
+
 is_jeju_parser = EnumOutputParser(enum=IsJeju)
+restaurant_or_tour_spot_parser = EnumOutputParser(enum=RestaurantOrTourSpot)

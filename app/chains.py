@@ -6,7 +6,7 @@ from langchain_core.output_parsers.openai_tools import (
 
 from dotenv import load_dotenv
 
-from .schemas import is_jeju_parser
+from .schemas import is_jeju_parser, restaurant_or_tour_spot_parser
 
 load_dotenv(override=True)
 
@@ -29,3 +29,22 @@ validate_prompt = ChatPromptTemplate.from_messages(
 )
 
 validator_chain = validate_prompt | llm | is_jeju_parser
+
+# Whether the user input is recommended by restaurants or tourist spots
+restaurant_or_tour_spot_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are an Assistance system responsible for choosing between recommending restaurants or tourist spots."
+            "Please check the user's input and respond with 'RESTAURANT' if the user is asking for restaurant recommendations."
+            "If the user is asking for tourist spot recommendations, please respond with 'TOUR_SPOT'"
+            f"{restaurant_or_tour_spot_parser.get_format_instructions()}"
+            "Below is the user's input.",
+        ),
+        MessagesPlaceholder(variable_name="messages"),
+    ]
+)
+
+restaurant_or_tour_spot_chain = (
+    restaurant_or_tour_spot_prompt | llm | restaurant_or_tour_spot_parser
+)
