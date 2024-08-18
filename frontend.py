@@ -65,7 +65,6 @@ if user_input := st.chat_input():
         chat_container = st.empty()
         human_message = HumanMessage(content=user_input)
 
-        res = graph.invoke(input=human_message)
         res = st.session_state["chain"].invoke(input=human_message)
         chat_container.text(res[-1].content)
         add_history("ai", res[-1].content)

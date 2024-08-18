@@ -1,8 +1,6 @@
 from langchain_upstage import ChatUpstage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.output_parsers.openai_tools import (
-    PydanticToolsParser,
-)
+from langchain.output_parsers import CommaSeparatedListOutputParser
 
 from dotenv import load_dotenv
 
@@ -11,6 +9,7 @@ from .schemas import is_jeju_parser, restaurant_or_tour_spot_parser
 load_dotenv(override=True)
 
 llm = ChatUpstage(base_url="https://api.upstage.ai/v1/solar")
+list_parser = CommaSeparatedListOutputParser()
 
 # Validate the user input to check if it is related to Jeju tourism
 validate_prompt = ChatPromptTemplate.from_messages(
@@ -48,3 +47,35 @@ restaurant_or_tour_spot_prompt = ChatPromptTemplate.from_messages(
 restaurant_or_tour_spot_chain = (
     restaurant_or_tour_spot_prompt | llm | restaurant_or_tour_spot_parser
 )
+
+# Extract the food information from the user input
+food_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are an Assistance system responsible for extracting food keyword from the user's input."
+            "Please extract the food keyword from the user's input and provide it. Keyword should be in Korean."
+            "Your response should be a list of comma separated values, eg: `foo, bar, baz`"
+            "Below is the user's input.",
+        ),
+        MessagesPlaceholder(variable_name="messages"),
+    ]
+)
+
+food_chain = food_prompt | llm
+
+# Extract the tourist spot information from the user input
+tour_spot_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are an Assistance system responsible for extracting tourist spot information from the user's input."
+            "Please extract the tourist spot information from the user's input and provide it. Keyword should be in Korean."
+            "Your response should be a list of comma separated values, eg: `foo, bar, baz`"
+            "Below is the user's input.",
+        ),
+        MessagesPlaceholder(variable_name="messages"),
+    ]
+)
+
+tour_spot_chain = tour_spot_prompt | llm

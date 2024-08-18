@@ -4,8 +4,19 @@ from langgraph.graph import END, MessageGraph
 from langchain_core.messages import HumanMessage, BaseMessage
 from langgraph.prebuilt import ToolNode
 
-from .chains import validator_chain, restaurant_or_tour_spot_chain
+from .chains import (
+    validator_chain,
+    restaurant_or_tour_spot_chain,
+    food_chain,
+    tour_spot_chain,
+)
 from .schemas import IsJeju, RestaurantOrTourSpot
+
+# Node List
+VALIDATOR = "validator"
+RESTAURANT_OR_TOUR_SPOT = "restaurant_or_tour_spot"
+RESTAURANT = "restaurant"
+TOUR_SPOT = "tour_spot"
 
 
 # Define Nodes
@@ -25,6 +36,20 @@ def restaurant_or_tour_spot_node(state: Sequence[BaseMessage]):
     return res.value
 
 
+## Define Restaurant Node
+def restaurant_node(state: Sequence[BaseMessage]):
+    res = food_chain.invoke(input={"messages": [state[0].content]})
+
+    return res.content
+
+
+## Define Tour Spot Node
+def tour_spot_node(state: Sequence[BaseMessage]):
+    res = tour_spot_chain.invoke(input={"messages": [state[0].content]})
+
+    return res.content
+
+
 ## Define Next Node Decider
 def decide_next_node(state: Sequence[BaseMessage]):
     if "YES" in (state[-1].content).upper():
@@ -38,30 +63,31 @@ def decide_next_node(state: Sequence[BaseMessage]):
 ## Define Next Node Decider2
 def decide_next_node2(state: Sequence[BaseMessage]):
     if "RESTAURANT" in (state[-1].content).upper():
-        return END
+        return RESTAURANT
     elif "TOUR_SPOT" in (state[-1].content).upper():
-        return END
+        return TOUR_SPOT
     else:
         return END
 
-
-# Node List
-VALIDATOR = "validator"
-RESTAURANT_OR_TOUR_SPOT = "restaurant_or_tour_spot"
 
 # Add Nodes
 builder = MessageGraph()
 builder.add_node(VALIDATOR, validate_node)
 builder.add_node(RESTAURANT_OR_TOUR_SPOT, restaurant_or_tour_spot_node)
+builder.add_node(RESTAURANT, restaurant_node)
+builder.add_node(TOUR_SPOT, tour_spot_node)
 
 # Add Edges
 builder.set_entry_point(VALIDATOR)
 builder.add_conditional_edges(
     VALIDATOR, decide_next_node, [RESTAURANT_OR_TOUR_SPOT, END]
 )
-builder.add_conditional_edges(RESTAURANT_OR_TOUR_SPOT, decide_next_node2, [END, END])
+builder.add_conditional_edges(
+    RESTAURANT_OR_TOUR_SPOT, decide_next_node2, [RESTAURANT, TOUR_SPOT, END]
+)
+builder.add_edge(RESTAURANT, END)
+builder.add_edge(TOUR_SPOT, END)
 
 graph = builder.compile()
-
 
 __all__ = ["graph"]
