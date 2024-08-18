@@ -16,17 +16,6 @@ if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
 
-def print_history():
-    for msg in st.session_state["messages"]:
-        st.chat_message(msg.role, avatar="💻" if msg.role == "ai" else "😀").write(
-            msg.content
-        )
-
-
-def add_history(role, content):
-    st.session_state["messages"].append(ChatMessage(role=role, content=content))
-
-
 with st.sidebar:
     clear_btn = st.button("Clear Chat History")
     user_place = st.text_area(
@@ -47,24 +36,61 @@ with st.sidebar:
                 Latitude: {my_coordinates[1]}
             """
             )
+            st.session_state["longitude"] = my_coordinates[0]
+            st.session_state["latitude"] = my_coordinates[1]
         st.session_state["chain"] = graph
 
 if clear_btn:
     retriever = st.session_state["messages"].clear()
-
-print_history()
 
 
 if "chain" not in st.session_state:
     # user_prompt
     st.session_state["chain"] = graph
 if user_input := st.chat_input():
-    add_history("user", user_input)
     st.chat_message("user", avatar="😀").write(user_input)
     with st.chat_message("assistant", avatar="💻"):
         chat_container = st.empty()
         human_message = HumanMessage(content=user_input)
 
         res = st.session_state["chain"].invoke(input=human_message)
-        chat_container.text(res[-1].content)
-        add_history("ai", res[-1].content)
+        if res[-1].content == "No location found.":
+            st.text("찾지 못했습니다.")
+        else:
+            locations = res[-1].content.split("\n\n")
+            # 각 장소 정보를 처리하여 화면에 표시
+            info_list = []
+            for location in locations:
+                # 각 줄을 분리하여 정보 추출
+                details = location.split("\n")
+                info = {}
+                for detail in details:
+                    if ": " not in detail:
+                        continue
+                    key, value = detail.strip().split(": ", 1)
+                    info[key] = value
+                info_list.append(info)
+            try:
+                longitude, latitude = (
+                    float(st.session_state["longitude"]),
+                    float(st.session_state["latitude"]),
+                )
+            except KeyError:
+                longitude, latitude = 126.4959513, 33.5059364
+            # Order by distance ASC
+            info_list = sorted(
+                info_list,
+                key=lambda x: (
+                    (float(x["Latitude"]) - latitude) ** 2
+                    + (float(x["Longitude"]) - longitude) ** 2
+                ),
+            )
+            for info in info_list[:5]:
+                st.text(info["Title"])
+                st.image(info["repPhoto"])
+                st.text(f"Address: {info['Address']}")
+                st.text(
+                    f"Distance: {round(((float(info['Latitude']) - latitude) ** 2 + (float(info['Longitude']) - longitude) ** 2) ** 0.5,2)} km"
+                )
+                st.text(f"Phone Number: {info['Phone Number']}")
+                st.markdown("---")  # 구분선

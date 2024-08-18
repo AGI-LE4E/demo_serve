@@ -1,15 +1,14 @@
 from langchain_upstage import ChatUpstage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.output_parsers import CommaSeparatedListOutputParser
 
 from dotenv import load_dotenv
 
 from .schemas import is_jeju_parser, restaurant_or_tour_spot_parser
+from .tools import find_location_by_keyword_from_csv
 
 load_dotenv(override=True)
 
 llm = ChatUpstage(base_url="https://api.upstage.ai/v1/solar")
-list_parser = CommaSeparatedListOutputParser()
 
 # Validate the user input to check if it is related to Jeju tourism
 validate_prompt = ChatPromptTemplate.from_messages(
@@ -53,8 +52,8 @@ food_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are an Assistance system responsible for extracting food keyword from the user's input."
-            "Please extract the food keyword from the user's input and provide it. Keyword should be in Korean."
+            "You are an Assistance system responsible for extracting food name from the user's input."
+            "Please extract the food name from the user's input and provide it. Food Name should be in Korean."
             "Your response should be a list of comma separated values, eg: `foo, bar, baz`"
             "Below is the user's input.",
         ),
@@ -79,3 +78,27 @@ tour_spot_prompt = ChatPromptTemplate.from_messages(
 )
 
 tour_spot_chain = tour_spot_prompt | llm
+
+# Search for the location of the user's input
+search_location_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are an Assistance system responsible for searching the location based on the extracted keyword."
+            "Below is the extracted keyword.",
+        ),
+        MessagesPlaceholder(variable_name="keywords"),
+        MessagesPlaceholder(variable_name="category"),
+        (
+            "system",
+            "Please search the location based on the extracted keyword."
+            "find_location_by_keyword_from_csv - Find the location from the keyword."
+            "You can use below tools to search the location.",
+        ),
+        MessagesPlaceholder(variable_name="tool_choice"),
+    ]
+)
+
+tools = [find_location_by_keyword_from_csv]
+
+search_location_chain = search_location_prompt | llm.bind_tools(tools)

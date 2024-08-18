@@ -32,8 +32,6 @@ def get_geocode(address: str):
             y = result["addresses"][0].get("y")
             return x, y
         else:
-            print("No address found.")
             return None, None
     else:
-        print(f"Error Code: {response.status_code}")
         return None, None
