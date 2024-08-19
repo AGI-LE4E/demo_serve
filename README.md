@@ -3,9 +3,18 @@
 ![alt text](images/image.png)
 ![alt text](images/tour_image.png)
 
-## LangChain Architecture
+## LangGraph Architecture
 
 ![alt text](images/langgraph.png)
+
+## Brief Project Introduction
+
+1) Users face the inconvenience of manually searching for and selecting travel destinations.
+2) Our system recommends suitable travel destinations based on simple inputs like travel themes.
+3) An LLM powered by Retrieval-Augmented Generation (RAG).
+4) Travel planners organizing trips to Jeju Island or travelers planning their visit to Jeju.
+
+- Additional: `We plan to add a feature to make it easier to search more data more conveniently.`
 
 ## Requirements
 
