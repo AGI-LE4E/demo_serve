@@ -6,7 +6,7 @@ from langchain_upstage import ChatUpstage
 from langchain_core.messages import HumanMessage
 
 from app.graphs import graph
-from app.naver_map import get_geocode
+from app.naver import get_geocode, search_naver_blog
 
 
 st.set_page_config(page_title="Jeju Travel 💬", page_icon="💬")
@@ -86,6 +86,16 @@ if user_input := st.chat_input():
                 ),
             )
             for info in info_list[:5]:
+                blog_info = search_naver_blog(info["Title"])
+                items_title = []
+                items_link = []
+                items_description = []
+                if blog_info.get("items"):
+                    blog_info = blog_info["items"]
+                    for item in blog_info:
+                        items_title.append(item["title"])
+                        items_link.append(item["link"])
+                        items_description.append(item["description"])
                 st.text(info["Title"])
                 st.image(info["repPhoto"])
                 st.text(f"Address: {info['Address']}")
@@ -93,4 +103,12 @@ if user_input := st.chat_input():
                     f"Distance: {round(((float(info['Latitude']) - latitude) ** 2 + (float(info['Longitude']) - longitude) ** 2) ** 0.5,2)} km"
                 )
                 st.text(f"Phone Number: {info['Phone Number']}")
+                st.text("Blog Posts:")
+                for i in range(len(items_title[:5])):
+                    st.markdown(
+                        f"[{items_title[i].replace('<b>', ' ').replace('</b>', ' ')}]({items_link[i]})"
+                    )
+                    st.text(
+                        items_description[i].replace("<b>", " ").replace("</b>", " ")
+                    )
                 st.markdown("---")  # 구분선
