@@ -1,10 +1,11 @@
 # Demo
 
 ![alt text](images/image.png)
+![alt text](images/tour_image.png)
 
 ## LangChain Architecture
 
-![alt text](images/langgraph.png.png)
+![alt text](images/langgraph.png)
 
 ## Requirements
 
